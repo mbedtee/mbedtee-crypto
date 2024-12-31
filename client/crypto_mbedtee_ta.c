@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
- * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) 2019 KapaXL (kapa.xl@outlook.com)
  */
 
@@ -35,7 +35,7 @@ struct sheader {
 int crypto_mbedtee_ta(int sockfd, char *platform_name, char *object_in,
 	char *object_out, char *config_in, char *certificate_out)
 {
-	int config_in_fd = -1,object_in_fd = -1,object_out_fd = -1,
+	int config_in_fd = -1, object_in_fd = -1, object_out_fd = -1,
 	certificate_out_fd = -1, ret = -1;
 
 	int config_size = 0, object_size = 0, certi_out_size = 0,
@@ -61,35 +61,39 @@ int crypto_mbedtee_ta(int sockfd, char *platform_name, char *object_in,
 	memset(&h, 0, sizeof(h));
 	memset(&hrecv, 0, sizeof(hrecv));
 
-	if ((config_in_fd = open(config_in, O_RDONLY))<0) {
+	config_in_fd = open(config_in, O_RDONLY);
+	if (config_in_fd < 0) {
 		fprintf(stderr, "Error while trying to open %s\n", config_in);
 		return ret;
 	}
 
-	if (fstat(config_in_fd,&filestat) < 0) {
-		fprintf(stderr,"While trying to get the file status of %s\n", config_in);
+	if (fstat(config_in_fd, &filestat) < 0) {
+		fprintf(stderr, "While trying to get the file status of %s\n", config_in);
 		goto out;
 	}
 
 	config_size = filestat.st_size;
 
-	if ((object_in_fd = open(object_in,O_RDONLY))<0) {
+	object_in_fd = open(object_in, O_RDONLY);
+	if (object_in_fd < 0) {
 		fprintf(stderr, "Error while trying to open %s\n", object_in);
 		goto out;
 	}
 
-	if (fstat(object_in_fd,&filestat) < 0) {
-		fprintf(stderr,"While trying to get the file status of %s\n", object_in);
+	if (fstat(object_in_fd, &filestat) < 0) {
+		fprintf(stderr, "While trying to get the file status of %s\n", object_in);
 		goto out;
 	}
 
 	object_size = filestat.st_size;
 
-	if ((certificate_out_fd = open(certificate_out, O_RDWR | O_TRUNC | O_CREAT, 0755)) < 0) {
+	certificate_out_fd = open(certificate_out, O_RDWR | O_TRUNC | O_CREAT, 0755);
+	if (certificate_out_fd < 0) {
 		fprintf(stderr, "Error while trying to open %s\n", certificate_out);
 		goto out;
 	}
-	if ((object_out_fd = open(object_out, O_RDWR | O_TRUNC | O_CREAT, 0755)) < 0) {
+	object_out_fd = open(object_out, O_RDWR | O_TRUNC | O_CREAT, 0755);
+	if (object_out_fd < 0) {
 		fprintf(stderr, "Error while trying to open %s\n", object_out);
 		goto out;
 	}
@@ -100,31 +104,31 @@ int crypto_mbedtee_ta(int sockfd, char *platform_name, char *object_in,
 
 	user = getpwuid(geteuid());
 
-	strncpy(h.user_name, user ? user->pw_name : "UnknownUser",
-			sizeof(h.user_name) - 1);
+	strlcpy(h.user_name, user ? user->pw_name : "UnknownUser",
+			sizeof(h.user_name));
 
-	strncpy(h.config_file_name, config_in +
+	strlcpy(h.config_file_name, config_in +
 		((strlen(config_in) > (sizeof(h.config_file_name) - 1)) ?
 		(strlen(config_in) + 1 - sizeof(h.config_file_name)) : 0),
-			sizeof(h.config_file_name) - 1);
+			sizeof(h.config_file_name));
 
-	strncpy(h.certi_file_name, certificate_out +
+	strlcpy(h.certi_file_name, certificate_out +
 		((strlen(certificate_out) > (sizeof(h.certi_file_name) - 1)) ?
 		(strlen(certificate_out) + 1 - sizeof(h.certi_file_name)) : 0),
-			sizeof(h.certi_file_name) - 1);
+			sizeof(h.certi_file_name));
 
-	strncpy(h.object_in_file_name, object_in +
+	strlcpy(h.object_in_file_name, object_in +
 		((strlen(object_in) > (sizeof(h.object_in_file_name) - 1)) ?
 		(strlen(object_in) + 1 - sizeof(h.object_in_file_name)) : 0),
-			sizeof(h.object_in_file_name) - 1);
+			sizeof(h.object_in_file_name));
 
-	strncpy(h.object_out_file_name, object_out +
+	strlcpy(h.object_out_file_name, object_out +
 		((strlen(object_out) > (sizeof(h.object_out_file_name) - 1)) ?
 		(strlen(object_out) + 1 - sizeof(h.object_out_file_name)) : 0),
-			sizeof(h.object_out_file_name) - 1);
+			sizeof(h.object_out_file_name));
 
 	gethostname((h.host_name), sizeof(h.host_name) - 1);
-	strncpy(h.platform_name, platform_name, sizeof(h.platform_name) - 1);
+	strlcpy(h.platform_name, platform_name, sizeof(h.platform_name));
 
 	fprintf(stdout, "current user: %s\n", h.user_name);
 

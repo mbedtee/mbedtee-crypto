@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
- * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) 2019 KapaXL (kapa.xl@outlook.com)
  */
 
@@ -21,7 +21,6 @@
 
 #define APP_NAME	"cryptoclient"
 #define VERSION		"1.0"
-#define BUILD_DATE	__DATE__
 
 static const char *serv_ip = "127.0.0.1";
 
@@ -36,17 +35,18 @@ static struct option long_options[] = {
 	{0, 0, NULL, 0}
 };
 
-static void print_usage(void) {
-	fprintf(stdout,"\tVersion: %s, Date: %s\n", VERSION, BUILD_DATE);
-	fprintf(stdout,"\t--type : operation type, mbedtee-ta or others. (INPUT)\n");
-	fprintf(stdout,"\t--platform-name : specify the platform name, generic or others. (INPUT)\n");
-	fprintf(stdout,"\t--config-in : specify the TA config file path. (INPUT)\n");
-	fprintf(stdout,"\t--object-in : specify the TA object file path. (INPUT)\n");
-	fprintf(stdout,"\t--object-out : specify the signed TA object file path. (OUTPUT)\n");
-	fprintf(stdout,"\t--certificate-out : specify the TA certificate file path. (OUTPUT)\n");
-	fprintf(stdout,"\t--help : this help information.\n");
-	fprintf(stdout,"Ex:\t ==> (./%s --type %s --platform generic --config-in ta.config --object-in ta_raw.o"
-		 " --object-out ta_signed.o --certificate-out ta.certi).\n", APP_NAME, CRYPTO_MBEDTEE_TA);
+static void print_usage(void)
+{
+	fprintf(stdout, "\tVersion: %s\n", VERSION);
+	fprintf(stdout, "\t--type : operation type, mbedtee-ta or others. (INPUT)\n");
+	fprintf(stdout, "\t--platform-name : specify the platform name, generic or others. (INPUT)\n");
+	fprintf(stdout, "\t--config-in : specify the TA config file path. (INPUT)\n");
+	fprintf(stdout, "\t--object-in : specify the TA object file path. (INPUT)\n");
+	fprintf(stdout, "\t--object-out : specify the signed TA object file path. (OUTPUT)\n");
+	fprintf(stdout, "\t--certificate-out : specify the TA certificate file path. (OUTPUT)\n");
+	fprintf(stdout, "\t--help : this help information.\n");
+	fprintf(stdout, "Ex:\t ==> (./%s --type %s --platform generic --config-in ta.config --object-in ta_raw.o --object-out ta_signed.o --certificate-out ta.certi).\n",
+		 APP_NAME, CRYPTO_MBEDTEE_TA);
 }
 
 /*
@@ -60,24 +60,25 @@ static int connect_server(const char *serv_ip, int serv_port)
 
 	printf("trying connect to %s@%d\n", serv_ip, serv_port);
 
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("create socket error: %s(errno: %d)\n", strerror(errno),errno);
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) {
+		printf("create socket error: %s(errno: %d)\n", strerror(errno), errno);
 		return -1;
 	}
 
-	setsockopt(sockfd, SOL_SOCKET,SO_SNDTIMEO,&timeout,sizeof(timeout));
+	setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 
 	memset(&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(serv_port);
-	if (inet_pton(AF_INET, serv_ip, &servaddr.sin_addr) <= 0){
-		printf("inet_pton error for %s\n",serv_ip);
+	if (inet_pton(AF_INET, serv_ip, &servaddr.sin_addr) <= 0) {
+		printf("inet_pton error for %s\n", serv_ip);
 		close(sockfd);
 		return -1;
 	}
 
-	if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-		printf("connect error: %s(errno: %d)\n",strerror(errno),errno);
+	if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
+		printf("connect error: %s(errno: %d)\n", strerror(errno), errno);
 		printf("maybe server was down??\n");
 		close(sockfd);
 		return -1;
@@ -102,54 +103,54 @@ int main(int argc, char *argv[])
 	int sockfd = -1, pos = 0, recv_bytes = 0;
 	struct cheader h, hrecv;
 
-	if ((argc==2) && (!strcmp(argv[1],"-h") ||
-		!strcmp(argv[1],"--help") || !strcmp(argv[1],"-help")) ) {
+	if ((argc == 2) && (!strcmp(argv[1], "-h") ||
+		!strcmp(argv[1], "--help") || !strcmp(argv[1], "-help"))) {
 		print_usage();
 		exit(0);
-	} else if(argc >= 9) {
-			while ((opt = getopt_long_only(argc, argv, "t:x:i:o:c:p:h",
-				long_options, &option_index)) != -1) {
-				switch (opt) {
-					case 't':
-						operation_type = optarg;
-						fprintf(stdout, "operation type: %s\n", operation_type);
-						break;
+	} else if (argc >= 9) {
+		while ((opt = getopt_long_only(argc, argv, "t:x:i:o:c:p:h",
+			long_options, &option_index)) != -1) {
+			switch (opt) {
+			case 't':
+				operation_type = optarg;
+				fprintf(stdout, "operation type: %s\n", operation_type);
+				break;
 
-					case 'x':
-						config_in=optarg;
-						fprintf(stdout, "config_in: %s\n", config_in);
-						break;
+			case 'x':
+				config_in = optarg;
+				fprintf(stdout, "config_in: %s\n", config_in);
+				break;
 
-					case 'i':
-						object_in = optarg;
-						fprintf(stdout, "object_in: %s\n", object_in);
-						break;
+			case 'i':
+				object_in = optarg;
+				fprintf(stdout, "object_in: %s\n", object_in);
+				break;
 
-					case 'o':
-						object_out = optarg;
-						fprintf(stdout, "object_out: %s\n", object_out);
-						break;
+			case 'o':
+				object_out = optarg;
+				fprintf(stdout, "object_out: %s\n", object_out);
+				break;
 
-					case 'c':
-						certificate_out = optarg;
-						fprintf(stdout, "certificate_out: %s\n", certificate_out);
-						break;
+			case 'c':
+				certificate_out = optarg;
+				fprintf(stdout, "certificate_out: %s\n", certificate_out);
+				break;
 
-					case 'p':
-						platform = optarg;
-						fprintf(stdout, "platform: %s\n", platform);
-						break;
+			case 'p':
+				platform = optarg;
+				fprintf(stdout, "platform: %s\n", platform);
+				break;
 
-					case 'h': /* help information */
-						print_usage();
-						exit(0);
+			case 'h': /* help information */
+				print_usage();
+				exit(0);
 
-					default :
-						print_usage();
-						exit(ret);
-				}
+			default:
+				print_usage();
+				exit(ret);
 			}
-	}else {
+		}
+	} else {
 		print_usage();
 		exit(ret);
 	}
@@ -167,7 +168,7 @@ int main(int argc, char *argv[])
 	memset(&hrecv, 0, sizeof(hrecv));
 	h.magic = SMAGIC;
 	h.version = SVERSION;
-	strncpy(h.operation_type, operation_type, sizeof(h.operation_type) - 1);
+	strlcpy(h.operation_type, operation_type, sizeof(h.operation_type));
 
 	if (send(sockfd, &h, sizeof(h), 0) < 0) {
 		fprintf(stderr, "send cheader error: %s(errno: %d)\n", strerror(errno), errno);
@@ -195,12 +196,6 @@ int main(int argc, char *argv[])
 
 	if (!strcmp(operation_type, CRYPTO_MBEDTEE_TA))
 		ret = crypto_mbedtee_ta(sockfd, platform, object_in, object_out, config_in, certificate_out);
-	/*
-	else if (!strcmp(operation_type, CRYPTO_MBEDTEE_3RDPARTY_TA))
-		ret = crypto_mbedtee_3rdparty_ta(...);
-	else if (!strcmp(operation_type, CRYPTO_MBEDTEE_OS))
-		ret = crypto_mbedtee(sockfd, platform, object_in, object_out);
-	*/
 
 out:
 	gettimeofday(&te, NULL);

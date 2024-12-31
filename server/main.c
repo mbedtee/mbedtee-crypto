@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
- * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) 2019 KapaXL (kapa.xl@outlook.com)
  */
 
@@ -37,8 +37,9 @@ int main(int argc, char *argv[])
 
 	slog("Starting CryptoServer\n");
 
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		slog("create socket error: %s(errno: %d)\n", strerror(errno),errno);
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) {
+		slog("create socket error: %s(errno: %d)\n", strerror(errno), errno);
 		return -1;
 	}
 
@@ -50,18 +51,19 @@ int main(int argc, char *argv[])
 	servaddr.sin_port = htons(SERV_PORT);
 
 	if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-		slog("bind socket error: %s(errno: %d)\n", strerror(errno),errno);
+		slog("bind socket error: %s(errno: %d)\n", strerror(errno), errno);
 		return -1;
 	}
 
 	if (listen(sockfd, 10) < 0) {
-		slog("listen socket error: %s(errno: %d)\n", strerror(errno),errno);
+		slog("listen socket error: %s(errno: %d)\n", strerror(errno), errno);
 		return -1;
 	}
 
 	while (1) {
-		if ((connfd = accept(sockfd, NULL, NULL)) < 0) {
-			slog("accept socket error: %s(errno: %d)\n", strerror(errno),errno);
+		connfd = accept(sockfd, NULL, NULL);
+		if (connfd < 0) {
+			slog("accept socket error: %s(errno: %d)\n", strerror(errno), errno);
 			continue;
 		}
 

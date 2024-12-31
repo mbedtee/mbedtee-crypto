@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
- * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) 2019 KapaXL (kapa.xl@outlook.com)
  */
 
@@ -38,8 +38,8 @@ struct sheader {
 
 struct certi_header {
 	unsigned int magic;
-    unsigned int total_len;
-    char certi_type[40];
+	unsigned int total_len;
+	char certi_type[40];
 	unsigned int rsa_key_offset;
 	unsigned int rsa_key_size;
 	unsigned int crypto_key_offset;
@@ -52,7 +52,7 @@ struct certi_header {
 	unsigned int version_size;
 };
 
-static char *element_str(char *buf, char *e)
+static char *strstr_of_config(char *buf, char *e)
 {
 	char *pos = NULL;
 
@@ -75,7 +75,7 @@ static char *element_str(char *buf, char *e)
 	return pos;
 }
 
-static int element_len(char *buf, char *e)
+static int strlen_of_config(char *buf, char *e)
 {
 	char *pos = NULL;
 	int len = 0;
@@ -122,19 +122,20 @@ static int rand_func(void *rng_state, unsigned char *output, size_t len)
 
 static int check_config(char *c)
 {
-	int ret = false;
+	int ret = false, len = 0;
 	char *temptr_strtok;
 	char *c_bak;
 	char *split_c = "-";
 	char tmp[256];
 
-	if (!element_str(c, "uuid") || !element_len(c, "uuid")) {
+	len = strlen_of_config(c, "uuid");
+	if (!len) {
 		slog("invalid UUID info\n");
 		goto out;
 	}
 
 	memset(tmp, 0, sizeof(tmp));
-	memcpy(tmp, element_str(c, "uuid"), element_len(c, "uuid"));
+	memcpy(tmp, strstr_of_config(c, "uuid"), len);
 	temptr_strtok = strtok_r(tmp, split_c, &c_bak);
 	temptr_strtok = strtok_r(NULL, split_c, &c_bak);
 	temptr_strtok = strtok_r(NULL, split_c, &c_bak);
@@ -145,32 +146,32 @@ static int check_config(char *c)
 		goto out;
 	}
 
-	if (!element_str(c, "name") || !element_len(c, "name")) {
+	if (!strlen_of_config(c, "name")) {
 		slog("invalid name info\n");
 		goto out;
 	}
 
-	if (!element_str(c, "path") || !element_len(c, "path")) {
+	if (!strlen_of_config(c, "path")) {
 		slog("invalid path info\n");
 		goto out;
 	}
 
-	if (!element_str(c, "stack_size") || !element_len(c, "stack_size")) {
+	if (!strlen_of_config(c, "stack_size")) {
 		slog("invalid stack_size info\n");
 		goto out;
 	}
 
-	if (!element_str(c, "heap_size") || !element_len(c, "heap_size")) {
+	if (!strlen_of_config(c, "heap_size")) {
 		slog("invalid heap_size info\n");
 		goto out;
 	}
 
-	if (!element_str(c, "single_instance") || (1 != element_len(c, "single_instance"))) {
+	if (strlen_of_config(c, "single_instance") != 1) {
 		slog("invalid single_instance info\n");
 		goto out;
 	}
 
-	if (!element_str(c, "dev_access") || (6 > element_len(c, "dev_access"))) {
+	if (strlen_of_config(c, "dev_access") < 6) {
 		slog("invalid dev_access info\n");
 		goto out;
 	}
@@ -198,7 +199,7 @@ static int prepare_certificate(struct sheader *h,
 	const mbedtls_md_info_t *md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
 	unsigned char shasum[64];
 	size_t olen;
-    mbedtls_cipher_context_t cipher;
+	mbedtls_cipher_context_t cipher;
 
 	mbedtls_pk_init(&pk);
 	mbedtls_cipher_init(&cipher);
@@ -212,16 +213,18 @@ static int prepare_certificate(struct sheader *h,
 
 	memset(&c, 0, sizeof(c));
 	c.magic = CERTI_MAGIC;
-	strcpy(c.certi_type, CRYPTO_MBEDTEE_TA);
+	strlcpy(c.certi_type, CRYPTO_MBEDTEE_TA, sizeof(c.certi_type));
 
 	stat(pubKeyPath, &file_st);
 
-	if (NULL == (pubKeyHdl = fopen(pubKeyPath, "r"))) {
+	pubKeyHdl = fopen(pubKeyPath, "r");
+	if (pubKeyHdl == NULL) {
 		slog("Open ta pub key file error @ %s\n", pubKeyPath);
 		goto out;
 	}
 
-	if (NULL == (cryptoKeyHdl = fopen(parentCryptoKeyPath, "r"))) {
+	cryptoKeyHdl = fopen(parentCryptoKeyPath, "r");
+	if (cryptoKeyHdl == NULL) {
 		slog("Open ta crypto key file error\n");
 		goto out;
 	}
@@ -321,7 +324,7 @@ static int prepare_ta_object(struct sheader *h,
 	const mbedtls_md_info_t *md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
 	unsigned char shasum[64];
 	size_t olen;
-    mbedtls_cipher_context_t cipher;
+	mbedtls_cipher_context_t cipher;
 
 	mbedtls_pk_init(&pk);
 	mbedtls_cipher_init(&cipher);
@@ -383,7 +386,7 @@ void crypto_mbedtee_ta(int connfd)
 
 	if (recv(connfd, buf, sizeof(buf), 0) == sizeof(h)) {
 		memcpy((char *)&h, buf, sizeof(h));
-		if (SMAGIC != h.magic) {
+		if (h.magic != SMAGIC) {
 			memset((char *)&h, 0, sizeof(h));
 			slog("header magic error\n");
 		}
@@ -392,7 +395,7 @@ void crypto_mbedtee_ta(int connfd)
 			slog("error send ack header\n");
 			return;
 		}
-		if (SMAGIC != h.magic)
+		if (h.magic != SMAGIC)
 			return;
 	} else {
 		slog("client exception??\n");
@@ -495,6 +498,4 @@ void crypto_mbedtee_ta(int connfd)
 out:
 	if (obj)
 		free(obj);
-
-	return;
 }

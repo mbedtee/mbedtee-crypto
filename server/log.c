@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
- * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) 2019 KapaXL (kapa.xl@outlook.com)
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -21,7 +20,7 @@ void slog(const char *fmt, ...)
 	static char cwd[256] = {0};
 	char logfile[512] = {0};
 	char timestr[64] = {0};
-	static FILE *logfp = NULL;
+	static FILE *logfp;
 	time_t now = time(NULL);
 	va_list args = {0};
 	size_t l = 0;
@@ -46,10 +45,11 @@ void slog(const char *fmt, ...)
 
 	struct timeval tv;
 	struct tm *p = NULL;
+
 	gettimeofday(&tv, NULL);
 	p = localtime(&tv.tv_sec);
 
- 	snprintf(timestr, sizeof(timestr), "[%04d-%02d-%02d %02d:%02d:%02d.%03ld] ",
+	snprintf(timestr, sizeof(timestr), "[%04d-%02d-%02d %02d:%02d:%02d.%03ld] ",
 		1900 + p->tm_year, 1 + p->tm_mon, p->tm_mday,
 		p->tm_hour, p->tm_min, p->tm_sec, tv.tv_usec/1000);
 

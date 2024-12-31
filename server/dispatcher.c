@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
- * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) 2019 KapaXL (kapa.xl@outlook.com)
  */
 
@@ -41,12 +41,12 @@ void dispatch(int connfd)
 
 	if (recv(connfd, cbuf, sizeof(cbuf), 0) == sizeof(h)) {
 		memcpy((char *)&h, cbuf, sizeof(h));
-		if (SMAGIC == h.magic) {
+		if (h.magic == SMAGIC) {
 			if (h.version < SVERSION) {
 				slog("error cryptoclient version %d\n", h.version);
 				memset((char *)&h, 0, sizeof(h));
-				strncpy((char *)&h, "cryptoclient version too low, pls pull the "
-							"latest cryptoclient\n", sizeof(h) - 1);
+				strlcpy((char *)&h, "cryptoclient version too low, pls pull the latest cryptoclient\n",
+							sizeof(h));
 			}
 			slog("cryptoclient version: %d\n", h.version);
 			if (send(connfd, (char *)&h, sizeof(h), 0) != sizeof(h)) {
@@ -55,7 +55,8 @@ void dispatch(int connfd)
 			}
 
 			__dispatch(connfd, &h);
-		} else slog("h.magic %x error\n", h.magic);
+		} else
+			slog("h.magic %x error\n", h.magic);
 	}
 
 	slog("Client Disconnected\n\n");

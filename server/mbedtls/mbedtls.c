@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
 /*
- * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) 2019 KapaXL (kapa.xl@outlook.com)
  *
  * Additional APIs for mbedtee which are not privoded by Mbed TLS
@@ -20,8 +20,7 @@
 #include "mbedtls.h"
 
 /*
- * u * x + y * v = gcd
- * gcd = GCD(x, y)
+ * gcd -> GCD(x, y) -> u * x + y * v = gcd
  */
 int mbedtls_mpi_egcd(mbedtls_mpi *gcd, mbedtls_mpi *u,
 	mbedtls_mpi *v, const mbedtls_mpi *x, const mbedtls_mpi *y)
@@ -105,12 +104,16 @@ int mbedtls_mpi_egcd(mbedtls_mpi *gcd, mbedtls_mpi *u,
 
 		mbedtls_mpi_swap(&Y, &X);
 		mbedtls_mpi_swap(&X, &R);
-		/* if div_mpi remainder is 0, done
-		after swap, X holds the remainder */
+		/*
+		 * if div_mpi remainder is 0, done
+		 * after swap, X holds the remainder
+		 */
 	} while (mbedtls_mpi_cmp_int(&X, 0) != 0);
 
-	/* the last X holds the GCD
-	after swap, Y is the holder */
+	/*
+	 * the last X holds the GCD
+	 * after swap, Y is the holder
+	 */
 	MBEDTLS_MPI_CHK(mbedtls_mpi_copy(gcd, &Y));
 
 	MBEDTLS_MPI_CHK(mbedtls_mpi_copy(u, &B));
@@ -281,14 +284,15 @@ int mbedtls_aes_cts(mbedtls_cipher_context_t *cipher,
 		/* cts-final need at least 2 blocks (final-ilen > 16 bytes) */
 		if (is_final && (ilen - copy_len <= blocksz)) {
 			unsigned char ifinal[32] = {0};
+
 			memcpy(ifinal, &cipher->unprocessed_data, blocksz);
 			memcpy(ifinal + blocksz, input + copy_len, ilen - copy_len);
 			return __mbedtls_aes_cts(cipher, ifinal, blocksz + ilen - copy_len, output, olen, is_final);
-		} else {
-			ret = __mbedtls_aes_cts(cipher, cipher->unprocessed_data, blocksz, output, &tmp, is_final);
-			if (ret != 0)
-				goto out;
 		}
+
+		ret = __mbedtls_aes_cts(cipher, cipher->unprocessed_data, blocksz, output, &tmp, is_final);
+		if (ret != 0)
+			goto out;
 
 		*olen += blocksz;
 		output += blocksz;
@@ -297,10 +301,13 @@ int mbedtls_aes_cts(mbedtls_cipher_context_t *cipher,
 		ilen -= copy_len;
 	}
 
-	if (!is_final && (copy_len = ilen % blocksz) != 0) {
-		memcpy(cipher->unprocessed_data, input + (ilen - copy_len), copy_len);
-		cipher->unprocessed_len += copy_len;
-		ilen -= copy_len;
+	if (!is_final) {
+		copy_len = ilen % blocksz;
+		if (copy_len != 0) {
+			memcpy(cipher->unprocessed_data, input + (ilen - copy_len), copy_len);
+			cipher->unprocessed_len += copy_len;
+			ilen -= copy_len;
+		}
 	}
 
 	if (ilen) {
@@ -424,14 +431,15 @@ int mbedtls_aes_xts(mbedtls_cipher_context_t *cipher,
 		/* let the final-ilen >= 16 bytes */
 		if (is_final && (ilen - copy_len < blocksz)) {
 			unsigned char ifinal[32] = {0};
+
 			memcpy(ifinal, &cipher->unprocessed_data, blocksz);
 			memcpy(ifinal + blocksz, input + copy_len, ilen - copy_len);
 			return __mbedtls_aes_xts(cipher, ifinal, blocksz + ilen - copy_len, output, olen, is_final);
-		} else {
-			ret = __mbedtls_aes_xts(cipher, cipher->unprocessed_data, blocksz, output, &tmp, is_final);
-			if (ret != 0)
-				goto out;
 		}
+
+		ret = __mbedtls_aes_xts(cipher, cipher->unprocessed_data, blocksz, output, &tmp, is_final);
+		if (ret != 0)
+			goto out;
 
 		*olen += blocksz;
 		output += blocksz;
@@ -440,10 +448,13 @@ int mbedtls_aes_xts(mbedtls_cipher_context_t *cipher,
 		ilen -= copy_len;
 	}
 
-	if (!is_final && (copy_len = ilen % blocksz) != 0) {
-		memcpy(cipher->unprocessed_data, input + (ilen - copy_len), copy_len);
-		cipher->unprocessed_len += copy_len;
-		ilen -= copy_len;
+	if (!is_final) {
+		copy_len = ilen % blocksz;
+		if (copy_len != 0) {
+			memcpy(cipher->unprocessed_data, input + (ilen - copy_len), copy_len);
+			cipher->unprocessed_len += copy_len;
+			ilen -= copy_len;
+		}
 	}
 
 	if (ilen) {
@@ -491,7 +502,8 @@ int mbedtls_ecb_crypt(mbedtls_cipher_context_t *cipher,
 		ilen -= copy_len;
 	}
 
-	if ((copy_len = ilen % blocksz) != 0) {
+	copy_len = ilen % blocksz;
+	if (copy_len != 0) {
 		memcpy(cipher->unprocessed_data, input + (ilen - copy_len), copy_len);
 		cipher->unprocessed_len += copy_len;
 		ilen -= copy_len;
@@ -514,10 +526,10 @@ out:
 	return ret;
 }
 
-#define DSA_VALIDATE_RET( cond )					   \
-	do {											   \
-		if (!(cond))								   \
-			return( MBEDTLS_ERR_DSA_BAD_INPUT_DATA );  \
+#define DSA_VALIDATE_RET(cond)							\
+	do {												\
+		if (!(cond))									\
+			return MBEDTLS_ERR_DSA_BAD_INPUT_DATA;		\
 	} while (0)
 
 void mbedtls_dsa_init(mbedtls_dsa_context *ctx)
@@ -542,19 +554,19 @@ static int mbedtls_dsa_check_pq(int modulus, int divisor)
 	int ret = -1;
 
 	switch (modulus) {
-		case 2048:
-			if (divisor == 224 || divisor == 256)
-				ret = 0;
-			break;
-		case 3072:
-			if (divisor == 256)
-				ret = 0;
-			break;
-		default:
-			if (modulus >= 512 && modulus <= 1024 &&
-				 !(modulus % 64) && (divisor == 160))
-				ret = 0;
-			break;
+	case 2048:
+		if (divisor == 224 || divisor == 256)
+			ret = 0;
+		break;
+	case 3072:
+		if (divisor == 256)
+			ret = 0;
+		break;
+	default:
+		if (modulus >= 512 && modulus <= 1024 &&
+			 !(modulus % 64) && (divisor == 160))
+			ret = 0;
+		break;
 	}
 
 	return ret;
@@ -635,10 +647,12 @@ int mbedtls_dsa_gen_key(mbedtls_dsa_context *ctx,
 {
 	int count = 0, q_len = 0;
 	int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+
 	DSA_VALIDATE_RET(ctx != NULL);
 	DSA_VALIDATE_RET(f_rng != NULL);
 
-	if ((ret = mbedtls_dsa_check_params(ctx)) != 0)
+	ret = mbedtls_dsa_check_params(ctx);
+	if (ret != 0)
 		return ret;
 
 	mbedtls_mpi_init(&ctx->X);
@@ -688,7 +702,8 @@ int mbedtls_dsa_gen_params(mbedtls_dsa_context *ctx,
 		q_len = 32;
 	else if (nbits >= 512 && nbits <= 1024 && !(nbits % 64))
 		q_len = 20;
-	else return MBEDTLS_ERR_DSA_BAD_INPUT_DATA;
+	else
+		return MBEDTLS_ERR_DSA_BAD_INPUT_DATA;
 
 	mbedtls_mpi_init(&ctx->P);
 	mbedtls_mpi_init(&ctx->Q);
@@ -717,14 +732,16 @@ int mbedtls_dsa_gen_params(mbedtls_dsa_context *ctx,
 			MBEDTLS_MPI_CHK(mbedtls_mpi_mul_mpi(&ctx->P, &T, &ctx->Q));
 		} while (mbedtls_mpi_bitlen(&ctx->P) < nbits);
 
-		/* P = T * Q + 1, T = (P - 1) / Q,
-		Q will be the prime divisor of P - 1 */
+		/*
+		 * P = T * Q + 1, T = (P - 1) / Q,
+		 * Q will be the prime divisor of P - 1
+		 */
 		MBEDTLS_MPI_CHK(mbedtls_mpi_add_int(&ctx->P, &ctx->P, 1));
 
 		count = 0;
 		do {
 			count += 2;
-			MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi(&ctx->P, &ctx->P, &Q2));
+			MBEDTLS_MPI_CHK(mbedtls_mpi_add_mpi(&ctx->P, &ctx->P, &Q2));
 			if (mbedtls_mpi_bitlen(&ctx->P) > nbits)
 				break;
 		} while (mbedtls_mpi_is_prime_ext(&ctx->P, 6, f_rng, p_rng));
@@ -763,6 +780,7 @@ int mbedtls_dsa_import_raw(mbedtls_dsa_context *ctx,
 					unsigned char const *X, size_t X_len)
 {
 	int ret = 0;
+
 	DSA_VALIDATE_RET(ctx != NULL);
 
 	if (P != NULL)
@@ -781,7 +799,7 @@ int mbedtls_dsa_import_raw(mbedtls_dsa_context *ctx,
 		MBEDTLS_MPI_CHK(mbedtls_mpi_read_binary(&ctx->X, X, X_len));
 
 cleanup:
-	if( ret != 0 )
+	if (ret != 0)
 		return MBEDTLS_ERR_DSA_BAD_INPUT_DATA | ret;
 
 	return 0;
@@ -795,6 +813,7 @@ int mbedtls_dsa_export_raw(const mbedtls_dsa_context *ctx,
 								unsigned char *X, size_t X_len)
 {
 	int ret = 0;
+
 	DSA_VALIDATE_RET(ctx != NULL);
 
 	if (P != NULL)
@@ -814,7 +833,7 @@ int mbedtls_dsa_export_raw(const mbedtls_dsa_context *ctx,
 
 cleanup:
 
-	return( ret );
+	return ret;
 }
 
 /*
@@ -852,8 +871,9 @@ static int dsa_signature_from_asn1(mbedtls_mpi *r,
 	const unsigned char *end = sig + slen;
 	size_t len;
 
-	if ((ret = mbedtls_asn1_get_tag(&p, end, &len,
-		MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE)) != 0) {
+	ret = mbedtls_asn1_get_tag(&p, end, &len,
+		MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE);
+	if (ret != 0) {
 		ret += MBEDTLS_ERR_DSA_BAD_INPUT_DATA;
 		return ret;
 	}
@@ -864,8 +884,10 @@ static int dsa_signature_from_asn1(mbedtls_mpi *r,
 		return ret;
 	}
 
-	if ((ret = mbedtls_asn1_get_mpi(&p, end, r)) != 0 ||
-		(ret = mbedtls_asn1_get_mpi(&p, end, s)) != 0) {
+	ret = mbedtls_asn1_get_mpi(&p, end, r);
+	ret |= mbedtls_asn1_get_mpi(&p, end, s);
+
+	if (ret != 0) {
 		ret += MBEDTLS_ERR_DSA_BAD_INPUT_DATA;
 		return ret;
 	}
@@ -892,7 +914,8 @@ int mbedtls_dsa_sign(mbedtls_dsa_context *ctx,
 	DSA_VALIDATE_RET(sig != NULL);
 	DSA_VALIDATE_RET(hashlen != 0);
 
-	if ((ret = mbedtls_dsa_check_privkey(ctx)) != 0)
+	ret = mbedtls_dsa_check_privkey(ctx);
+	if (ret != 0)
 		return ret;
 
 	mbedtls_mpi_init(&B);
@@ -910,7 +933,7 @@ int mbedtls_dsa_sign(mbedtls_dsa_context *ctx,
 		while (mbedtls_mpi_cmp_mpi(&K, &ctx->Q) >= 0)
 			MBEDTLS_MPI_CHK(mbedtls_mpi_shift_r(&K, 1));
 
-		if ( count++ > 10) {
+		if (count++ > 10) {
 			ret = MBEDTLS_ERR_DSA_RNG_FAILED;
 			goto cleanup;
 		}
@@ -986,17 +1009,19 @@ int mbedtls_dsa_verify(mbedtls_dsa_context *ctx,
 	DSA_VALIDATE_RET(sig != NULL);
 	DSA_VALIDATE_RET(hashlen != 0);
 
-	if ((ret = mbedtls_dsa_check_pubkey(ctx)) != 0)
+	ret = mbedtls_dsa_check_pubkey(ctx);
+	if (ret != 0)
 		return ret;
 
-	mbedtls_mpi_init( &U1 );
-	mbedtls_mpi_init( &U2 );
-	mbedtls_mpi_init( &W );
-	mbedtls_mpi_init( &R );
-	mbedtls_mpi_init( &S );
-	mbedtls_mpi_init( &V );
+	mbedtls_mpi_init(&U1);
+	mbedtls_mpi_init(&U2);
+	mbedtls_mpi_init(&W);
+	mbedtls_mpi_init(&R);
+	mbedtls_mpi_init(&S);
+	mbedtls_mpi_init(&V);
 
-	if ((ret = dsa_signature_from_asn1(&R, &S, sig, slen)) != 0) {
+	ret = dsa_signature_from_asn1(&R, &S, sig, slen);
+	if (ret != 0) {
 		ret = MBEDTLS_ERR_DSA_VERIFY_FAILED;
 		goto cleanup;
 	}
@@ -1027,7 +1052,8 @@ int mbedtls_dsa_verify(mbedtls_dsa_context *ctx,
 	MBEDTLS_MPI_CHK(mbedtls_mpi_mod_mpi(&V, &V, &ctx->P));
 	MBEDTLS_MPI_CHK(mbedtls_mpi_mod_mpi(&V, &V, &ctx->Q));
 
-	if ((ret = mbedtls_mpi_cmp_mpi(&V, &R)) != 0) {
+	ret = mbedtls_mpi_cmp_mpi(&V, &R);
+	if (ret != 0) {
 		ret = MBEDTLS_ERR_DSA_VERIFY_FAILED;
 		goto cleanup;
 	}
