@@ -213,7 +213,7 @@ static int prepare_certificate(struct sheader *h,
 
 	memset(&c, 0, sizeof(c));
 	c.magic = CERTI_MAGIC;
-	strlcpy(c.certi_type, CRYPTO_MBEDTEE_TA, sizeof(c.certi_type));
+	crypto_strlcpy(c.certi_type, CRYPTO_MBEDTEE_TA, sizeof(c.certi_type));
 
 	stat(pubKeyPath, &file_st);
 

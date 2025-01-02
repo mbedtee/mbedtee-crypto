@@ -104,31 +104,31 @@ int crypto_mbedtee_ta(int sockfd, char *platform_name, char *object_in,
 
 	user = getpwuid(geteuid());
 
-	strlcpy(h.user_name, user ? user->pw_name : "UnknownUser",
+	crypto_strlcpy(h.user_name, user ? user->pw_name : "UnknownUser",
 			sizeof(h.user_name));
 
-	strlcpy(h.config_file_name, config_in +
+	crypto_strlcpy(h.config_file_name, config_in +
 		((strlen(config_in) > (sizeof(h.config_file_name) - 1)) ?
 		(strlen(config_in) + 1 - sizeof(h.config_file_name)) : 0),
 			sizeof(h.config_file_name));
 
-	strlcpy(h.certi_file_name, certificate_out +
+	crypto_strlcpy(h.certi_file_name, certificate_out +
 		((strlen(certificate_out) > (sizeof(h.certi_file_name) - 1)) ?
 		(strlen(certificate_out) + 1 - sizeof(h.certi_file_name)) : 0),
 			sizeof(h.certi_file_name));
 
-	strlcpy(h.object_in_file_name, object_in +
+	crypto_strlcpy(h.object_in_file_name, object_in +
 		((strlen(object_in) > (sizeof(h.object_in_file_name) - 1)) ?
 		(strlen(object_in) + 1 - sizeof(h.object_in_file_name)) : 0),
 			sizeof(h.object_in_file_name));
 
-	strlcpy(h.object_out_file_name, object_out +
+	crypto_strlcpy(h.object_out_file_name, object_out +
 		((strlen(object_out) > (sizeof(h.object_out_file_name) - 1)) ?
 		(strlen(object_out) + 1 - sizeof(h.object_out_file_name)) : 0),
 			sizeof(h.object_out_file_name));
 
 	gethostname((h.host_name), sizeof(h.host_name) - 1);
-	strlcpy(h.platform_name, platform_name, sizeof(h.platform_name));
+	crypto_strlcpy(h.platform_name, platform_name, sizeof(h.platform_name));
 
 	fprintf(stdout, "current user: %s\n", h.user_name);
 

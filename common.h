@@ -29,4 +29,25 @@ struct ack {
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+static inline size_t crypto_strlcpy(char *dst,
+	const char *src, size_t n)
+{
+	char *d = dst;
+	const char *s = src;
+
+	if (n) {
+		while (--n && (*d++ = *s++))
+			;
+		if (n == 0)
+			*d = 0;
+	}
+
+	if (n == 0) {
+		while (*s++)
+			;
+	}
+
+	return s - src - 1;
+}
+
 #endif
