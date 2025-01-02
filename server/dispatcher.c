@@ -45,8 +45,9 @@ void dispatch(int connfd)
 			if (h.version < SVERSION) {
 				slog("error cryptoclient version %d\n", h.version);
 				memset((char *)&h, 0, sizeof(h));
-				strlcpy((char *)&h, "cryptoclient version too low, pls pull the latest cryptoclient\n",
-							sizeof(h));
+				crypto_strlcpy((char *)&h,
+					"cryptoclient version too low, pls pull the latest cryptoclient\n",
+					sizeof(h));
 			}
 			slog("cryptoclient version: %d\n", h.version);
 			if (send(connfd, (char *)&h, sizeof(h), 0) != sizeof(h)) {

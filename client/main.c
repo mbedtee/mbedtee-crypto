@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 	memset(&hrecv, 0, sizeof(hrecv));
 	h.magic = SMAGIC;
 	h.version = SVERSION;
-	strlcpy(h.operation_type, operation_type, sizeof(h.operation_type));
+	crypto_strlcpy(h.operation_type, operation_type, sizeof(h.operation_type));
 
 	if (send(sockfd, &h, sizeof(h), 0) < 0) {
 		fprintf(stderr, "send cheader error: %s(errno: %d)\n", strerror(errno), errno);
